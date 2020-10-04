@@ -1,0 +1,216 @@
+Assignment1\
+- Pakcheera Choppradit 20303349\
+- Sasa Manasboonpermpoon 20302647\
+\
+
+## Question1\
+Design an experiment to perform the above task and specify the key elements of conducting this\
+Answer :\
+\
+***Factor*** \
+  Answer: one factors which is model\
+***Levels of each factor***\
+  Answer : 4  levels which Random Forest, Naive Bayes, Support Vector Machines, Linear Discriminant Analysis\
+***Experimental unit***\
+  Answer : dataset\
+***Response. [ Justify the choice of response, you can have more than one response, max of 50 words]***\
+  Answer : accuracy. Because we have four train proportions of blocking which are (0.9/0.1, 0.8/0.2, 0.7/0.3). The total data test is different. So, we have to compare it by accuracy. _(31 words)_ \
+***Number of Replications. [Justify by presenting sample size calculations, max  50 words + an optional figure/table]***\   
+  Answer : forty-five\
+we use pwr package to calculate replications.By we determine effect size equal to 0.25,significance level = 0.05 and power = 0.8 and it compute 45 sample for CRD.So, we use number of blocks multiply by the sample.That will gets 180 experimental observations for each model. _(49 words)_\
+\
+```{r}
+#install.packages("pwr")
+library(pwr)
+pwr.anova.test(k = 4, f = 0.25, power = 0.80, sig.level = 0.05)
+```
+
+\
+\
+\
+***Experimental Methodology. [max 50 words, must explain how basic principles of design of experiments are incorporated]***\
+Answer:\
+ Replication : forty-five times
+ Randomization : dataset
+ Blocking : proportion of train/test data which are (0.9/0.1, 0.8/0.2, 0.7/0.3) \ 
+ _For more information_ we use the same train\ test dataset in each highlight in the following color. _(38words)_
+ ![pic](wer.jpg) 
+
+ \
+ \
+ \
+**************************************************************************************************************** \
+\
+***Experimental Design code*** \
+\
+Answer:\
+
+
+```{r}
+#install.packages("randomForest")
+#install.packages("e1071")
+#install.packages("MASS")
+#install.packages("reshape2")
+require(randomForest)
+library(e1071)
+library(MASS)
+Data<-read.csv("spambase.csv",header = FALSE)
+names(Data)<-c('word_freq_make',"word_freq_address","word_freq_all" ,"word_freq_3d","word_freq_our","word_freq_over","word_freq_remove","word_freq_internet","word_freq_order","word_freq_mail","word_freq_receive","word_freq_will","word_freq_people","word_freq_report","word_freq_addresses","word_freq_free","word_freq_business","word_freq_email","word_freq_you","word_freq_credit","word_freq_your","word_freq_font","word_freq_000","word_freq_money","word_freq_hp","word_freq_hpl","word_freq_george","word_freq_650","word_freq_lab","word_freq_labs","word_freq_telnet","word_freq_857","word_freq_data","word_freq_415","word_freq_85","word_freq_technology","word_freq_1999","word_freq_parts","word_freq_pm","word_freq_direct","word_freq_cs","word_freq_meeting","word_freq_original","word_freq_project","word_freq_re","word_freq_edu","word_freq_table","word_freq_conference","char_freq_semicolon","char_freq_parenthesis","char_freq_bracket","char_freq_exclamation","char_freq_dollar","char_freq_hashtag","capital_run_length_average","capital_run_length_longest","capital_run_length_total" ,"spam")  
+Data$spam=factor(Data$spam)
+rf=c()
+nb=c()
+svm=c()
+lda=c()
+for (j in 0:3){
+for (i in 1:45){
+set.seed(sample(1:1000,1))
+ind <- sample(2, nrow(Data), replace = TRUE, prob=c(0.6+0.1*j, 0.4-0.1*j))
+Data.rf <- randomForest(spam ~ .,data=Data[ind == 1,])
+Data.predrf <- predict(Data.rf, Data[ind == 2,])
+Data.nb <- naiveBayes(spam ~ .,data=Data[ind == 1,])
+Data.prednb <- predict(Data.nb, Data[ind == 2,])
+Data.svm <- svm(spam ~ .,data=Data[ind == 1,])
+Data.predsvm <- predict(Data.svm, Data[ind == 2,])
+Data.lda <- lda(spam ~ .,data=Data[ind == 1,])
+Data.predlda <- predict(Data.lda, Data[ind == 2,])
+P <- data.frame(Data$spam[ind==2],Data.predrf,Data.prednb,Data.predsvm,Data.predlda$class )
+names(P)<-c('real','rf','nb','svm','lda')
+row.names(P)<- NULL
+rf<-c(rf,sum(P$real==P$rf)/length(P$real))
+nb<-c(nb,sum(P$real==P$nb)/length(P$real))
+svm<-c(svm,sum(P$real==P$svm)/length(P$real))
+lda<-c(lda,sum(P$real==P$lda)/length(P$real))
+}
+}
+block=c()
+for (i in 1:4){
+for (j in 1:45){
+  block=c(block,i)
+}
+}
+Experiment<-data.frame(block,rf,nb,svm,lda)
+names(Experiment)=c("Block","Random Forest", "Naive Bayes","SVM", "LDA")
+
+library(reshape2)
+Experiment=melt(data=Experiment,id.vars ="Block" ,measure.vars =c("Random Forest", "Naive Bayes","SVM", "LDA"))
+names(Experiment)<-c("Block","Model","Accuracy")
+write.csv(Experiment,'Experiment.csv')
+```
+
+
+
+\
+\
+\
+****************************************************************************************************************
+\
+**Question2** _(157words)_ \
+Perform the experiment specified in Question 1 and present the results of your findings as a report
+for the consultant. Your report should including all relevant results in scientific format.  Include the
+knitted markdown file as an appendix to the main report.  
+Report: Not more than 200 words and must have an informative figure\
+\
+\
+##Outlier\
+- First we use RBD to determine if average accuracy in each model is equal or not.\
+- Then we will use Tukey HSD test to multiple compared in each model what is the best.\
+- Interpret the Tukey HSD test result.\
+\
+\
+##RBD\
+```{r}
+Data<-read.csv("Experiment.csv",header = TRUE) 
+Data$Model = factor(Data$Model)
+Data$Block= factor(Data$Block)
+str(Data)
+```
+***Explain the result***
+- X is the index.\
+-we have 4 blocks which are (0.9, 0.1), (0.8, 0.2), (0.7,0.3), (0.6,0.4) for (train, test)\
+- we have 4 models which are according to the general information of question.\ 
+- acuuracy number come from number of correct spam devided by total number of test data.\
+\
+```{r}
+library(ggplot2)
+p <- ggplot(Data, aes(x=Model, y=Accuracy, group=Model, col = Model)) + geom_point(aes(fill=Model))+ylab("Accuracy")
+p + facet_grid(. ~Block) + theme(axis.text.x = element_text(angle = 90))
+```
+
+```{r}
+aov = aov(data = Data, Accuracy~Model+Block)
+summary(aov)
+
+```
+\
+**summary**\
+Analysis variance indicates that at 5% level of significance there is sufficient evidence(F(3,713) = 22120.060, P= <2e-16) to conclude that the average number of accuracy for each model are not equal.\
+\
+\
+```{r}
+plot(aov)
+```
+\
+##Histrogram
+```{r}
+hist(residuals(aov))
+```
+\
+##Tukey HSD\
+```{r}
+#install.packages("agricolae")
+```
+\
+```{r}
+library(agricolae)
+#Tukey's Studentized range test
+Tukey=HSD.test(aov,"Model");
+Tukey
+```
+\
+```{r}
+TukeyHSD(aov)
+```
+\
+```{r}
+plot(Tukey)
+```
+\
+```{r}
+tapply(Data$Accuracy,Data$Model,mean)
+```
+\
+**summary**
+Across methods average accuracy in Random Forest, Naive Bayes, Support Vector Machines, Linear Discriminant Analysis are pairwise are different. The average accuracy for Random Forest is highest. 
+\
+\
+\
+*******************************************************************************************************
+***Question3***\
+The IT consultant is also working on a project to detect fraudulence currency based on the images of
+the notes.    Each image can be translated into a feature set for input into a supervised learning
+algorithm. Would your recommendations from the spam detection project apply here? Explain and
+illustrate. [Max of 50 words]\
+\
+**Answer**\
+We suggest using RBD to compare Machine Learning models. We use G*power calculating number of replicates and we block the version of banknote , because each banknote has a different quality of input. For example, in Version1 is higher intensity of color than Version2.Using Tukey HSD test to multiple comparison. _(50 words)_
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
