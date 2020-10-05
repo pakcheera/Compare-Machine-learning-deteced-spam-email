@@ -5,11 +5,11 @@
   Answer : 4  levels which Random Forest, Naive Bayes, Support Vector Machines, Linear Discriminant Analysis\
 ***Experimental unit***\
   Answer : dataset\
-***Response. [ Justify the choice of response, you can have more than one response, max of 50 words]***\
+***Response. ***\
   Answer : accuracy. \
-***Number of Replications. [Justify by presenting sample size calculations, max  50 words + an optional figure/table]***\   
+***Number of Replications.***\   
   Answer : forty-five\
-***Experimental Methodology. [max 50 words, must explain how basic principles of design of experiments are incorporated]***\
+***Experimental Methodology. ***\
 Answer:\
  Replication : forty-five times
  Randomization : dataset
